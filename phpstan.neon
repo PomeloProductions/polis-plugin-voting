@@ -1,0 +1,15 @@
+parameters:
+    level: 5
+    paths:
+        - src
+    ignoreErrors:
+        # Optional framework/consumer classes not installed in the package's
+        # minimal dependency set (App\* consumer overrides, Eloquent magic).
+        - identifier: class.notFound
+        - identifier: staticMethod.notFound
+        # Defensive divide-by-zero guard on a currently-constant range; kept so
+        # the thresholds can be made configurable without reintroducing a bug.
+        -
+            message: '#Comparison operation "<=" between 15 and 0 is always false#'
+            path: src/Services/GroupProgressCalculator.php
+    reportUnmatchedIgnoredErrors: false

@@ -1,0 +1,36 @@
+{
+    "name": "Voting",
+    "slug": "voting",
+    "version": "0.1.0",
+    "kind": "in-process",
+    "runtime": "polis-laravel",
+    "description": "Entity-agnostic head-to-head (pairwise) ranking engine. One mechanism, three user-selectable systems: list ranking, cross-list prioritization, decision helper.",
+    "backend": {
+        "package": "polis/plugin-voting",
+        "plugin_class": "Polis\\Plugin\\Voting\\VotingPlugin",
+        "provider": "Polis\\Plugin\\Voting\\VotingPluginServiceProvider"
+    },
+    "capabilities": [
+        "routes",
+        "migrations",
+        "bindings",
+        "config",
+        "system:list_ranking",
+        "system:cross_list",
+        "system:decision_helper"
+    ],
+    "dependencies": [
+        { "plugin": "polis-laravel", "constraint": ">=0.13 <1.0" }
+    ],
+    "config_schema": {
+        "type": "object",
+        "properties": {
+            "table_prefix": {
+                "type": "string",
+                "default": "",
+                "description": "Prefix for the plugin's tables, to avoid colliding with a host app that already owns a voting_sessions table."
+            }
+        },
+        "additionalProperties": true
+    }
+}

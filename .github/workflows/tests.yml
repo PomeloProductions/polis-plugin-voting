@@ -1,0 +1,112 @@
+name: Tests
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  changes:
+    name: Detect changes
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      code: ${{ steps.filter.outputs.code }}
+      workflows: ${{ steps.filter.outputs.workflows }}
+      php-matrix: ${{ steps.matrix.outputs.php }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Filter paths
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            code:
+              - 'src/**'
+              - 'tests/**'
+              - 'config/**'
+              - 'database/**'
+              - 'routes/**'
+              - 'composer.json'
+              - 'phpunit*.xml'
+              - 'phpstan*.neon'
+            workflows:
+              - '.github/workflows/**'
+
+      # Full matrix on push, trimmed to min+max on PRs to save runner minutes.
+      # 8.4 stays in BOTH sets so the PHPStan hard-gate (if: matrix.php == '8.4')
+      # always runs.
+      - name: Compute PHP matrix
+        id: matrix
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            echo 'php=["8.3","8.4","8.5"]' >> "$GITHUB_OUTPUT"
+          else
+            echo 'php=["8.3","8.4"]' >> "$GITHUB_OUTPUT"
+          fi
+
+  phpunit:
+    name: PHPUnit (PHP ${{ matrix.php }})
+    runs-on: ubuntu-latest
+    needs: changes
+    if: >-
+      (needs.changes.outputs.code == 'true' || needs.changes.outputs.workflows == 'true')
+      && github.event.pull_request.draft == false
+    timeout-minutes: 15
+
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ${{ fromJSON(needs.changes.outputs.php-matrix) }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP ${{ matrix.php }}
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: mbstring, bcmath, intl, zip, sqlite, pdo_sqlite
+          coverage: none
+          tools: composer:v2
+
+      - name: Get composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-php-${{ matrix.php }}-composer-${{ hashFiles('**/composer.json') }}
+          restore-keys: |
+            ${{ runner.os }}-php-${{ matrix.php }}-composer-
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Check formatting (Pint)
+        if: matrix.php == '8.4'
+        run: ./vendor/bin/pint --test
+
+      - name: PHPStan static analysis
+        if: matrix.php == '8.4'
+        run: php -d memory_limit=1G ./vendor/bin/phpstan analyse --no-progress
+
+      - name: Run Unit tests
+        run: ./vendor/bin/phpunit --testsuite=Unit
+
+      - name: Run Integration tests (dummy consumer app)
+        run: ./vendor/bin/phpunit -c phpunit-app.xml --testsuite=Integration
+
+      - name: Run Feature tests (dummy consumer app)
+        run: ./vendor/bin/phpunit -c phpunit-app.xml --testsuite=Feature

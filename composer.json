@@ -1,0 +1,86 @@
+{
+    "name": "polis/plugin-voting",
+    "description": "Polis Voting plugin — an entity-agnostic head-to-head (pairwise) ranking engine. One mechanism, three user-selectable systems (list ranking, cross-list prioritization, decision helper) delivered as an in-process polis-laravel plugin.",
+    "type": "library",
+    "license": "MIT",
+    "homepage": "https://github.com/PomeloProductions/polis-plugin-voting",
+    "keywords": [
+        "laravel",
+        "polis",
+        "pomelo",
+        "plugin",
+        "voting",
+        "ranking",
+        "pairwise",
+        "head-to-head"
+    ],
+    "authors": [
+        {
+            "name": "Bryce Meyer",
+            "email": "bryce13950@gmail.com"
+        },
+        {
+            "name": "Pomelo Productions",
+            "homepage": "https://github.com/PomeloProductions"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/PomeloProductions/polis-plugin-voting/issues",
+        "source": "https://github.com/PomeloProductions/polis-plugin-voting"
+    },
+    "autoload": {
+        "psr-4": {
+            "Polis\\Plugin\\Voting\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Polis\\Plugin\\Voting\\Tests\\": "tests/"
+        },
+        "comment": "The dummy consumer app (App\\, Database\\Factories\\ -> tests/Application) is deliberately NOT mapped here; it is registered dynamically for the Feature/Integration suites only, in tests/bootstrap-app.php, so it never leaks into the standalone Unit suite."
+    },
+    "require": {
+        "php": ">=8.3.0",
+        "illuminate/contracts": "^11.0 || ^12.0 || ^13.0",
+        "illuminate/database": "^11.0 || ^12.0 || ^13.0",
+        "illuminate/http": "^11.0 || ^12.0 || ^13.0",
+        "illuminate/support": "^11.0 || ^12.0 || ^13.0",
+        "illuminate/validation": "^11.0 || ^12.0 || ^13.0",
+        "polis/polis-laravel": ">=0.13 <1.0"
+    },
+    "require-dev": {
+        "dg/bypass-finals": "^1.6",
+        "laravel/pint": "^1.0",
+        "mockery/mockery": "^1.6",
+        "nunomaduro/collision": "^8.0 || ^9.0",
+        "orchestra/testbench": "^9.0 || ^10.0 || ^11.0",
+        "phpstan/phpstan": "^2.0",
+        "phpunit/phpunit": "^11.0 || ^12.0"
+    },
+    "scripts": {
+        "test": "phpunit",
+        "test:unit": "phpunit --testsuite=Unit",
+        "test:app": "phpunit -c phpunit-app.xml",
+        "pint": "pint",
+        "stan": "phpstan analyse --no-progress"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Polis\\Plugin\\Voting\\VotingPluginServiceProvider"
+            ]
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/PomeloProductions/polis-laravel",
+            "comment": "polis/polis-laravel is a public repo, not on Packagist; composer fetches it anonymously. A consuming app also declares this repository (see README)."
+        }
+    ]
+}
